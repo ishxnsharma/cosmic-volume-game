@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cosmic Crate: Mobile Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-space: #2c3e50;
+            --panel-bg: #ffffff;
+            --red: #FF4757;
+            --blue: #3742fa;
+            --green: #2ed573;
+            --yellow: #ffa502;
+            --dark: #2f3542;
+            --purple: #5352ed;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-space);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 20px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            margin: 0;
+            /* Changed from fixed height to min-height to allow scrolling on small phones */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Allow scrolling only if needed (vertical) */
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2, .fun-text, .check-btn, .start-btn, .modal-btn { font-family: 'Fredoka One', cursive; }
+
+        /* Music Toggle - moved slightly for better mobile touch */
+        .music-toggle {
+            position: fixed; top: 15px; right: 15px;
+            background: rgba(255,255,255,0.2); border: 2px solid white;
+            color: white; padding: 0; border-radius: 50%;
+            width: 45px; height: 45px; font-size: 1.2rem;
+            cursor: pointer; z-index: 500; transition: transform 0.2s;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .music-toggle:active { transform: scale(0.9); background: rgba(255,255,255,0.4); }
+
+        /* INTRO SCREEN */
+        #intro-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e272e, #5352ed);
+            z-index: 100; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: white;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            padding: 20px; box-sizing: border-box;
+            overflow-y: auto; /* Allow scrolling on intro if needed */
+        }
+
+        .lesson-card {
+            background: white; color: var(--dark); padding: 30px;
+            border-radius: 30px; text-align: center; width: 100%; max-width: 700px;
+            box-shadow: 0 15px 0 #341f97; border: 5px solid var(--yellow);
+            box-sizing: border-box;
+        }
+
+        .concept-grid { 
+            display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; justify-content: center; 
+        }
+        .concept-item {
+            background: #dfe4ea; padding: 15px; border-radius: 20px; width: 120px;
+            box-shadow: 0 8px 0 #ced6e0; 
+        }
+        .concept-icon { font-size: 2.5rem; margin-bottom: 5px; display: block; }
+        .c-red { color: var(--red); } .c-blue { color: var(--blue); } .c-green { color: var(--green); }
+
+        .formula-box {
+            background: var(--dark); color: var(--yellow); padding: 15px 30px;
+            border-radius: 50px; font-size: 1.5rem; display: inline-block;
+            margin-bottom: 25px; border: 3px dashed var(--yellow);
+            max-width: 100%; word-wrap: break-word;
+        }
+
+        .start-btn, .check-btn {
+            background: linear-gradient(to bottom, #2ed573, #1bad4f);
+            color: white; border: none; padding: 15px 40px;
+            font-size: 1.5rem; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 8px 0 #13823a; transition: all 0.1s;
+            text-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            width: 100%; max-width: 300px;
+        }
+        .start-btn:active, .check-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #13823a; }
+
+        /* GAME SCREEN */
+        #game-screen {
+            display: none; 
+            width: 95%; /* Responsive Width */
+            max-width: 1100px;
+            background: var(--panel-bg);
+            border-radius: 30px; box-shadow: 0 20px 0 #1e272e;
+            padding: 20px; border: 4px solid var(--purple);
+            opacity: 0; transition: opacity 0.5s;
+            margin: 20px 0;
+            box-sizing: border-box;
+        }
+        
+        /* Flex Layout: By default Row (Desktop), Column on Mobile */
+        .flex-layout { 
+            display: flex; gap: 20px; width: 100%; align-items: center; 
+            flex-direction: row; 
+        }
+
+        .scene-container { 
+            flex: 1.3; height: 500px; display: flex; justify-content: center; align-items: center; perspective: 1200px; 
+            /* On mobile we might need less height */
+        }
+        .cube-root { width: 0; height: 0; position: relative; transform-style: preserve-3d; transform: rotateX(-25deg) rotateY(-35deg); transition: transform 0.3s ease; }
+        
+        .face {
+            position: absolute; opacity: 1; box-sizing: border-box; border: 3px solid rgba(0,0,0,0.5);
+            background-color: #fff;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.2) 3px, transparent 3px),
+                linear-gradient(90deg, rgba(0,0,0,0.2) 3px, transparent 3px),
+                radial-gradient(circle at center, rgba(255,255,255,0.8) 0%, rgba(0,0,0,0.1) 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+        }
+        .face-front, .face-back { background-color: var(--red); }
+        .face-right, .face-left { background-color: var(--blue); }
+        .face-top, .face-bottom { background-color: var(--green); }
+
+        .controls { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 15px; background: #f1f2f6; border-radius: 25px; width: 100%; box-sizing: border-box; }
+        h2 { margin: 0; color: var(--purple); font-size: 1.8rem; text-align: center; letter-spacing: 1px; }
+
+        .target-container {
+            position: relative; background: var(--dark); border: 3px solid var(--yellow);
+            padding: 10px; border-radius: 15px; text-align: center; color: white;
+        }
+        .target-lbl { font-size: 1rem; color: var(--yellow); font-weight: bold; }
+        .target-num { font-size: 2.5rem; color: white; font-family: 'Fredoka One'; text-shadow: 2px 2px 0 #000; }
+
+        .hint-btn {
+            position: absolute; top: -10px; right: -10px;
+            background: var(--yellow); color: var(--dark); border: 2px solid white;
+            width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;
+            cursor: pointer; box-shadow: 0 4px 0 #c98d00;
+        }
+        .hint-text-area { background: #fff3cd; color: #856404; padding: 10px; border-radius: 15px; font-size: 0.9rem; margin-top: 10px; display: none; border: 2px solid var(--yellow); font-weight: bold;}
+
+        .slider-group { background: white; padding: 8px 15px; border-radius: 15px; box-shadow: 0 4px 0 #d1ccc0; }
+        .label-row { display: flex; justify-content: space-between; font-family: 'Fredoka One'; font-size: 1.1rem; }
+        
+        /* Larger touch targets for sliders on mobile */
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 15px; border-radius: 10px; background: #dfe4ea; outline: none; margin: 12px 0; border: 2px solid white; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 3px 0 rgba(0,0,0,0.3); transition: transform 0.1s; }
+        input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.1); }
+        #inpL::-webkit-slider-thumb { background: var(--red); }
+        #inpW::-webkit-slider-thumb { background: var(--blue); }
+        #inpH::-webkit-slider-thumb { background: var(--green); }
+
+        .math-equation {
+            text-align: center; font-size: 1.5rem;
+            background: var(--purple); color: white;
+            padding: 10px; border-radius: 15px;
+            font-family: 'Fredoka One', cursive;
+            box-shadow: 0 6px 0 #3231b8;
+        }
+
+        .feedback-container { display: flex; align-items: center; background: white; padding: 10px; border-radius: 20px; min-height: 70px; }
+        .mascot { font-size: 3rem; margin-right: 15px; transition: transform 0.2s; flex-shrink: 0; }
+        .feedback-text { font-weight: bold; font-size: 1.1rem; color: var(--dark); flex: 1; }
+        
+        /* SOLUTION MODAL */
+        #solution-modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 600;
+            justify-content: center; align-items: center;
+            padding: 20px; box-sizing: border-box;
+        }
+        .modal-box {
+            background: white; width: 100%; max-width: 450px; padding: 30px;
+            border-radius: 30px; text-align: center;
+            border: 5px solid var(--red);
+            box-shadow: 0 0 50px rgba(255, 71, 87, 0.5);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .modal-btn {
+            background: var(--blue); color: white; border: none;
+            padding: 15px 30px; font-size: 1.3rem; border-radius: 50px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #1e272e; width: 100%;
+        }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
+
+        /* --- MOBILE RESPONSIVENESS (Media Query) --- */
+        @media (max-width: 900px) {
+            .flex-layout { flex-direction: column; }
+            .scene-container { height: 350px; width: 100%; }
+            .controls { width: 100%; }
+            #game-screen { padding: 15px; margin-top: 60px; /* Space for music toggle */ }
+            h1 { font-size: 2.5rem !important; }
+            .lesson-card { padding: 20px; }
+            .concept-item { width: 40%; } /* 2 per row on phone */
+            .mascot { font-size: 2.5rem; }
+        }
+        
+        /* Extra small phones */
+        @media (max-width: 400px) {
+            .scene-container { height: 280px; }
+            .target-num { font-size: 2rem; }
+            .math-equation { font-size: 1.2rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+    
+    <audio id="bg-music" loop>
+        <source src="https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg" type="audio/ogg">
+    </audio>
+    <audio id="sfx-pop" src="https://assets.mixkit.co/active_storage/sfx/2579/2579-preview.mp3"></audio>
+    <audio id="sfx-win" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+    <audio id="sfx-fail" src="https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3"></audio>
+
+    <button class="music-toggle" onclick="toggleMusic()" title="Toggle Music">
+        <i class="fa-solid fa-volume-xmark" id="music-icon"></i>
+    </button>
+
+    <div id="intro-screen">
+        <div class="lesson-card">
+            <h1 style="font-size: 3rem; color:var(--purple); margin-bottom: 10px; text-shadow: 3px 3px 0 #fee787">Cosmic Crate Builder</h1>
+            <p style="font-size: 1.3rem; font-weight: bold; margin-bottom: 20px;">Welcome Cadet! Ready for your mission?</p>
+            <div class="concept-grid">
+                <div class="concept-item">
+                    <i class="fa-solid fa-ruler-horizontal concept-icon c-red"></i>
+                    <div class="fun-text c-red">Length</div>
+                </div>
+                <div class="concept-item">
+                    <i class="fa-solid fa-ruler-combined concept-icon c-blue"></i>
+                    <div class="fun-text c-blue">Width</div>
+                </div>
+                <div class="concept-item">
+                    <i class="fa-solid fa-ruler-vertical concept-icon c-green"></i>
+                    <div class="fun-text c-green">Height</div>
+                </div>
+            </div>
+            <p style="font-size: 1.2rem; font-weight: bold;">The Magic Formula:</p>
+            <div class="formula-box fun-text">
+                <span style="color:var(--red)">L</span> × 
+                <span style="color:var(--blue)">W</span> × 
+                <span style="color:var(--green)">H</span>
+            </div>
+            <br>
+            <button class="start-btn" onclick="startGame()">🚀 Start Mission!</button>
+            <div style="margin-top:10px; font-size:0.8rem; opacity:0.8">(Tap to Start Audio)</div>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <div class="flex-layout">
+            <div class="scene-container">
+                <div class="cube-root" id="cube">
+                    <div class="face face-front"></div>
+                    <div class="face face-back"></div>
+                    <div class="face face-right"></div>
+                    <div class="face face-left"></div>
+                    <div class="face face-top"></div>
+                    <div class="face face-bottom"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h2>Mission Control</h2>
+                <div class="target-container">
+                    <button class="hint-btn" onclick="toggleHint()"><i class="fa-solid fa-question"></i></button>
+                    <div class="target-lbl">REQUIRED SIZE</div>
+                    <span class="target-num" id="targetDisplay">12</span>
+                    <div id="hintArea" class="hint-text-area fun-text"></div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="label-row" style="color:var(--red)"><i class="fa-solid fa-ruler-horizontal"></i> Length <span id="lblL">2</span></div>
+                    <input type="range" id="inpL" min="1" max="5" value="2" oninput="playPop()">
+                </div>
+                <div class="slider-group">
+                    <div class="label-row" style="color:var(--blue)"><i class="fa-solid fa-ruler-combined"></i> Width <span id="lblW">2</span></div>
+                    <input type="range" id="inpW" min="1" max="5" value="2" oninput="playPop()">
+                </div>
+                <div class="slider-group">
+                    <div class="label-row" style="color:var(--green)"><i class="fa-solid fa-ruler-vertical"></i> Height <span id="lblH">2</span></div>
+                    <input type="range" id="inpH" min="1" max="5" value="2" oninput="playPop()">
+                </div>
+
+                <div class="math-equation">
+                    <span id="eqL" style="color:var(--red)">2</span> × 
+                    <span id="eqW" style="color:var(--blue)">2</span> × 
+                    <span id="eqH" style="color:var(--green)">2</span> = 
+                    <span id="currentVolumeDisplay" style="color:var(--yellow)">8</span>
+                </div>
+
+                <button class="check-btn" onclick="checkAnswer()">SUBMIT CRATE</button>
+                
+                <div class="feedback-container">
+                    <div class="mascot" id="mascot">🤖</div>
+                    <div class="feedback-text" id="feedbackMsg">Awaiting orders, Cadet!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="solution-modal">
+        <div class="modal-box">
+            <div style="font-size: 4rem; margin-bottom:10px;">🚑</div>
+            <h2 style="color:var(--red);">Trouble?</h2>
+            <p style="font-size:1.2rem; margin: 15px 0;">Don't worry Cadet! The correct size is <b id="modal-answer">4 x 3 x 2</b></p>
+            <button class="modal-btn" onclick="autoFix()">✨ Auto-Fix My Box ✨</button>
+        </div>
+    </div>
+
+<script>
+    let targetVol = 12;
+    let failedAttempts = 0;
+    let solutionL = 0, solutionW = 0, solutionH = 0;
+    const unitSize = 60; // Slightly smaller unit size for better mobile fit
+
+    const inpL = document.getElementById('inpL'); const lblL = document.getElementById('lblL'); const eqL = document.getElementById('eqL');
+    const inpW = document.getElementById('inpW'); const lblW = document.getElementById('lblW'); const eqW = document.getElementById('eqW');
+    const inpH = document.getElementById('inpH'); const lblH = document.getElementById('lblH'); const eqH = document.getElementById('eqH');
+    const currentVolDisplay = document.getElementById('currentVolumeDisplay');
+    const targetDisplay = document.getElementById('targetDisplay');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const mascot = document.getElementById('mascot');
+    const hintArea = document.getElementById('hintArea');
+    const modal = document.getElementById('solution-modal');
+    
+    const bgMusic = document.getElementById('bg-music');
+    let isMusicPlaying = false;
+
+    function startGame() {
+        bgMusic.volume = 0.4;
+        bgMusic.play().then(() => {
+            isMusicPlaying = true;
+            document.getElementById('music-icon').className = "fa-solid fa-music";
+        }).catch(e => console.log("Audio blocked until click"));
+        
+        // Slide Intro Up
+        document.getElementById('intro-screen').style.transform = "translateY(-150%) rotate(-5deg)";
+        
+        setTimeout(() => {
+            const game = document.getElementById('game-screen');
+            game.style.display = "block";
+            // Small delay to allow display block to apply before opacity
+            setTimeout(() => game.style.opacity = "1", 50);
+        }, 600);
+        
+        nextLevel(); 
+    }
+
+    function toggleMusic() {
+        if(isMusicPlaying) { bgMusic.pause(); isMusicPlaying = false; document.getElementById('music-icon').className = "fa-solid fa-volume-xmark"; }
+        else { bgMusic.play(); isMusicPlaying = true; document.getElementById('music-icon').className = "fa-solid fa-music"; }
+    }
+
+    function playPop() {
+        const pop = document.getElementById('sfx-pop'); pop.currentTime = 0; pop.play().catch(e=>{});
+        updateBox();
+    }
+
+    function updateBox() {
+        const L = parseInt(inpL.value); const W = parseInt(inpW.value); const H = parseInt(inpH.value);
+        lblL.textContent = L; lblW.textContent = W; lblH.textContent = H;
+        eqL.textContent = L; eqW.textContent = W; eqH.textContent = H;
+        currentVolDisplay.textContent = L * W * H;
+
+        const pxL = L * unitSize; const pxH = H * unitSize; const pxW = W * unitSize;
+        const bg = `${unitSize}px ${unitSize}px`;
+        const faces = {
+            front: document.querySelector('.face-front'), back: document.querySelector('.face-back'),
+            right: document.querySelector('.face-right'), left: document.querySelector('.face-left'),
+            top: document.querySelector('.face-top'), bottom: document.querySelector('.face-bottom')
+        };
+        
+        setFace(faces.front, pxL, pxH, pxW/2, 0, 0, bg); setFace(faces.back, pxL, pxH, pxW/2, 180, 0, bg);
+        setFace(faces.right, pxW, pxH, pxL/2, 90, 0, bg); setFace(faces.left, pxW, pxH, pxL/2, -90, 0, bg);
+        setFace(faces.top, pxL, pxW, pxH/2, 0, 90, bg); setFace(faces.bottom, pxL, pxW, pxH/2, 0, -90, bg);
+        
+        resetFeedback();
+    }
+
+    function setFace(el, w, h, tz, ry, rx, bg) {
+        el.style.width = w + 'px'; el.style.height = h + 'px';
+        el.style.marginLeft = -(w/2) + 'px'; el.style.marginTop = -(h/2) + 'px';
+        el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(${tz}px)`;
+        el.style.backgroundSize = bg;
+    }
+
+    function checkAnswer() {
+        const current = parseInt(currentVolDisplay.textContent);
+        if (current === targetVol) {
+            document.getElementById('sfx-win').play();
+            feedbackMsg.innerHTML = "MISSION SUCCESS! Good job!";
+            feedbackMsg.style.color = "#27ae60";
+            mascot.textContent = "🤩"; mascot.style.transform = "scale(1.3) rotate(10deg)";
+            fireConfetti();
+            setTimeout(nextLevel, 3000);
+            failedAttempts = 0; 
+        } else {
+            document.getElementById('sfx-fail').play();
+            failedAttempts++;
+            
+            feedbackMsg.textContent = current < targetVol ? "Too Small!" : "Too Big!";
+            feedbackMsg.style.color = "#e17055";
+            mascot.textContent = "😵";
+            
+            if (failedAttempts >= 3) {
+                setTimeout(openSolutionModal, 1000);
+            }
+        }
+    }
+
+    function nextLevel() {
+        let attempts = 0;
+        let valid = false;
+        
+        while(!valid && attempts < 50) {
+            solutionL = Math.floor(Math.random() * 4) + 1; // 1 to 4
+            solutionW = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            solutionH = Math.floor(Math.random() * 4) + 1; // 1 to 4
+            
+            let possibleTarget = solutionL * solutionW * solutionH;
+            
+            if (possibleTarget !== targetVol) {
+                targetVol = possibleTarget;
+                valid = true;
+            }
+            attempts++;
+        }
+
+        targetDisplay.textContent = targetVol;
+        
+        inpL.value = 2; inpW.value = 2; inpH.value = 2;
+        failedAttempts = 0;
+        updateBox();
+        feedbackMsg.textContent = "Next Crate Ready!";
+        mascot.textContent = "🤖"; mascot.style.transform = "scale(1)";
+    }
+
+    function openSolutionModal() {
+        document.getElementById('modal-answer').textContent = `${solutionL} × ${solutionW} × ${solutionH}`;
+        modal.style.display = "flex";
+    }
+
+    function autoFix() {
+        modal.style.display = "none";
+        inpL.value = solutionL;
+        inpW.value = solutionW;
+        inpH.value = solutionH;
+        updateBox();
+        feedbackMsg.textContent = "Auto-Fixed! Click Submit.";
+        mascot.textContent = "🔧";
+    }
+
+    function resetFeedback() {
+        if(feedbackMsg.textContent.includes("Success")) return;
+        feedbackMsg.textContent = "Scanning...";
+        feedbackMsg.style.color = "var(--dark)";
+        hintArea.style.display = "none";
+    }
+
+    function toggleHint() {
+        if(hintArea.style.display === "block") { hintArea.style.display="none"; return;}
+        const c = parseInt(currentVolDisplay.textContent);
+        hintArea.innerHTML = c < targetVol ? "Too small! Move sliders 👉" : (c > targetVol ? "Too big! Move sliders 👈" : "Submit it!");
+        hintArea.style.display = "block";
+    }
+
+    const canvas = document.getElementById("confetti-canvas"); const ctx = canvas.getContext("2d"); let particles = [];
+    function fireConfetti() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        for(let i=0; i<150; i++) particles.push({x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20, color: `hsl(${Math.random()*360},100%,60%)`, life: 120});
+        animate();
+    }
+    function animate() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        particles.forEach((p,i) => { p.x+=p.vx; p.y+=p.vy; p.life--; p.vy+=0.6; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,10,10); if(p.life<=0) particles.splice(i,1); });
+        if(particles.length>0) requestAnimationFrame(animate);
+    }
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+</script>
+</body>
+</html>

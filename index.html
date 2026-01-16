@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmic Crate: Mobile Fixed</title>
+    <title>Cosmic Crate: Final</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -29,6 +29,7 @@
             margin: 0;
             min-height: 100vh;
             display: flex;
+            flex-direction: column; /* Changed for footer */
             justify-content: center;
             align-items: center;
             overflow-x: hidden;
@@ -67,9 +68,7 @@
             box-sizing: border-box;
         }
 
-        .concept-grid { 
-            display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; justify-content: center; 
-        }
+        .concept-grid { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; justify-content: center; }
         .concept-item {
             background: #dfe4ea; padding: 15px; border-radius: 20px; width: 120px;
             box-shadow: 0 8px 0 #ced6e0; 
@@ -96,24 +95,19 @@
 
         /* GAME SCREEN */
         #game-screen {
-            display: none; 
-            width: 95%; max-width: 1100px;
+            display: none; width: 95%; max-width: 1100px;
             background: var(--panel-bg);
             border-radius: 30px; box-shadow: 0 20px 0 #1e272e;
             padding: 20px; border: 4px solid var(--purple);
             opacity: 0; transition: opacity 0.5s;
             margin: 20px 0;
             box-sizing: border-box;
+            flex-shrink: 0; /* Prevent shrinking */
         }
         
-        .flex-layout { 
-            display: flex; gap: 20px; width: 100%; align-items: center; 
-            flex-direction: row; 
-        }
+        .flex-layout { display: flex; gap: 20px; width: 100%; align-items: center; flex-direction: row; }
 
-        .scene-container { 
-            flex: 1.3; height: 500px; display: flex; justify-content: center; align-items: center; perspective: 1200px; 
-        }
+        .scene-container { flex: 1.3; height: 500px; display: flex; justify-content: center; align-items: center; perspective: 1200px; }
         .cube-root { width: 0; height: 0; position: relative; transform-style: preserve-3d; transform: rotateX(-25deg) rotateY(-35deg); transition: transform 0.3s ease; }
         
         .face {
@@ -193,18 +187,33 @@
             cursor: pointer; margin-top: 20px; box-shadow: 0 5px 0 #1e272e; width: 100%;
         }
 
+        /* --- FOOTER & COPYRIGHT --- */
+        footer {
+            margin-top: auto;
+            color: rgba(255,255,255,0.7);
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            width: 100%;
+            z-index: 50;
+        }
+        
+        .github-link {
+            color: var(--yellow);
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .github-link:hover { color: white; }
+
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; }
 
-        /* --- MOBILE RESPONSIVENESS (Media Query) --- */
         @media (max-width: 900px) {
             .flex-layout { flex-direction: column; }
-            .scene-container { 
-                /* Reduce height so it doesn't push cube too far down */
-                height: 300px; 
-                width: 100%; 
-                /* Add margin to push controls away from cube */
-                margin-bottom: 20px;
-            }
+            .scene-container { height: 300px; width: 100%; margin-bottom: 20px; }
             .controls { width: 100%; }
             #game-screen { padding: 15px; margin-top: 60px; }
             h1 { font-size: 2.5rem !important; }
@@ -212,7 +221,6 @@
             .concept-item { width: 40%; }
             .mascot { font-size: 2.5rem; }
         }
-        
         @media (max-width: 400px) {
             .scene-container { height: 260px; }
         }
@@ -262,6 +270,13 @@
             <button class="start-btn" onclick="startGame()">🚀 Start Mission!</button>
             <div style="margin-top:10px; font-size:0.8rem; opacity:0.8">(Tap to Start Audio)</div>
         </div>
+        
+        <footer>
+            &copy; 2026 Cosmic Crate Builder <br>
+            <a href="https://github.com/ishxnsharma" class="github-link" target="_blank">
+                <i class="fa-brands fa-github"></i> Built by Ishan Sharma
+            </a>
+        </footer>
     </div>
 
     <div id="game-screen">
@@ -331,9 +346,8 @@
     let solutionL = 0, solutionW = 0, solutionH = 0;
     
     // --- SMART RESIZING LOGIC ---
-    // Detect mobile width to make cube smaller
     const isMobile = window.innerWidth < 900;
-    const unitSize = isMobile ? 40 : 60; // 40px for mobile, 60px for desktop
+    const unitSize = isMobile ? 40 : 60; 
 
     const inpL = document.getElementById('inpL'); const lblL = document.getElementById('lblL'); const eqL = document.getElementById('eqL');
     const inpW = document.getElementById('inpW'); const lblW = document.getElementById('lblW'); const eqW = document.getElementById('eqW');
@@ -496,12 +510,9 @@
         if(particles.length>0) requestAnimationFrame(animate);
     }
     
-    // Resize update logic
     window.addEventListener('resize', () => { 
         canvas.width = window.innerWidth; 
         canvas.height = window.innerHeight;
-        // Optional: reload page on drastic resize to reset unitSize if rotating phone
-        // location.reload(); 
     });
 
 </script>
